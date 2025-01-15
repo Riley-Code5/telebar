@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telebar</title>
+    <script>
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value;
+
+            if (message.trim() === '') {
+                alert('Please enter a message.');
+                return;
+            }
+
+            const response = await fetch('/send_message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            if (data.status === 'success') {
+                messageInput.value = ''; // Clear the input box
+            } else {
+                alert(data.message);
+            }
+        }
+
+        async function fetchMessages() {
+            const response = await fetch('/get_messages');
+            const data = await response.json();
+            updateChat(data.history);
+        }
+
+        function updateChat(history) {
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = ''; // Clear the chat box
+            history.forEach(entry => {
+                const messageElem = document.createElement('p');
+                messageElem.innerHTML = `<strong>${entry.username}:</strong> ${entry.message}`;
+                chatBox.appendChild(messageElem);
+            });
+            chatBox.scrollTop = chatBox.scrollHeight; // Scroll to the bottom
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Fetch messages initially
+            fetchMessages();
+
+            // Set up polling every 1 second
+            setInterval(fetchMessages, 1000);
+        });
+    </script>
+</head>
+<body>
+    <h1>Chat Box</h1>
+    <div id="chatBox" style="border: 1px solid #ccc; height: 300px; overflow-y: scroll; padding: 10px;"></div>
+    <input id="messageInput" type="text" placeholder="Type your message..." />
+    <button onclick="sendMessage()">Send</button>
+    <br><br>
+    <a href="/logout">Logout</a>
+</body>
+</html>
